@@ -31,7 +31,7 @@ html, body, [class*="css"] {
 
 /* Header banner */
 .dashboard-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f092fb 100%);
     border-radius: 20px;
     padding: 36px 44px;
     margin-bottom: 28px;
@@ -186,12 +186,12 @@ hr {
 # ─── COLOR PALETTE ──────────────────────────────────────────────────────────────
 COLOR_SENTIMEN = {
     "positif": "#10b981",
-    "negatif": "#f43f5e",
+    "negatif": "#f42f5e",
     "netral":  "#f59e0b",
 }
 COLOR_ASPEK = {
     "fungsionalitas":           "#667eea",
-    "transaksi & pembayaran":   "#f093fb",
+    "transaksi & pembayaran":   "#f092fb",
     "customer service":         "#06b6d4",
 }
 PLOTLY_TEMPLATE = "plotly_white"
@@ -820,7 +820,7 @@ with tab6:
                 title=f"Komparasi Evaluasi Model pada Aspek {aspek.title()}",
             )
             fig_eval = fig_style(fig_eval)
-            fig_eval.update_traces(texttemplate="%{text:.3f}", textposition="outside")
+            fig_eval.update_traces(texttemplate="%{text:.2f}", textposition="outside")
             fig_eval.update_yaxes(range=[0, 100])
             fig_eval.update_xaxes(tickangle=-25)
             st.plotly_chart(fig_eval, use_container_width=True)
