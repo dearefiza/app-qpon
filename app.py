@@ -698,7 +698,7 @@ with tab5:
         view = view[view["aspek_final"] == filter_aspek]
 
     # Kolom yang ditampilkan
-    show_cols = [c for c in ["at", "score", "final_text", "sentimen_final", "aspek_final", "jumlah_kata"] if c in view.columns]
+    show_cols = [c for c in ["at", "score", "content", "sentimen_final", "aspek_final", "jumlah_kata"] if c in view.columns]
     rename_map = {
         "at": "Tanggal", "score": "Rating", "final_text": "Ulasan",
         "sentimen_final": "Sentimen", "aspek_final": "Aspek", "jumlah_kata": "Jml Kata"
