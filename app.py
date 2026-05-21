@@ -837,7 +837,7 @@ with tab6:
             
             fig_eval.update_xaxes(tickangle=-20)
 
-st.plotly_chart(fig_eval, use_container_width=True)
+            st.plotly_chart(fig_eval, use_container_width=True)
         else:
             st.info("Pilih minimal satu metrik untuk menampilkan bar chart.")
 
