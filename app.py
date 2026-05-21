@@ -158,16 +158,28 @@ div[data-testid="stMultiSelect"] > div {
 .stTabs [data-baseweb="tab-list"] {
     background: #ffffff;
     border-radius: 12px;
-    padding: 5px;
-    gap: 4px;
+    padding: 6px;
+    gap: 8px;
     box-shadow: 0 2px 10px rgba(102,126,234,0.10);
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
 }
 .stTabs [data-baseweb="tab"] {
     background: transparent;
     color: #9198c0;
     border-radius: 9px;
     font-weight: 700;
-    font-size: 13px;
+    font-size: 12px;
+    padding: 8px 12px;
+    flex: 1;
+    text-align: center;
+    white-space: nowrap;
+}
+.stTabs [data-baseweb="tab"] p {
+    font-size: 12px;
+    margin: 0;
+    text-align: center;
 }
 .stTabs [aria-selected="true"] {
     background: linear-gradient(135deg, #667eea, #764ba2) !important;
