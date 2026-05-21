@@ -25,7 +25,7 @@ html, body, [class*="css"] {
 
 /* Background */
 .stApp {
-    background: #f0f4ff;
+    background: #f0f2ff;
     color: #1e2240;
 }
 
@@ -750,7 +750,7 @@ with tab6:
                 <div class="metric-card">
                     <div class="metric-label">{str(row['aspek']).title()}</div>
                     <div class="metric-value" style="font-size:22px;color:#667eea">{row['model']}</div>
-                    <div class="metric-pct">{row['skenario']} · F1-Score {row['f1_score']:.4f}</div>
+                    <div class="metric-pct">{row['skenario']} · F1-Score {row['f1_score']:.2f}</div>
                 </div>
                 """, unsafe_allow_html=True)
 
@@ -786,10 +786,10 @@ with tab6:
 
         st.dataframe(
             table_view.style.format({
-                "Accuracy": "{:.4f}",
-                "Precision": "{:.4f}",
-                "Recall": "{:.4f}",
-                "F1-Score": "{:.4f}",
+                "Accuracy": "{:.2f}",
+                "Precision": "{:.2f}",
+                "Recall": "{:.2f}",
+                "F1-Score": "{:.2f}",
             }),
             use_container_width=True,
             hide_index=True,
@@ -846,7 +846,7 @@ with tab6:
         title="Perbandingan F1-Score Model pada Seluruh Aspek",
     )
     fig_all = fig_style(fig_all)
-    fig_all.update_traces(texttemplate="%{text:.3f}", textposition="outside")
-    fig_all.update_yaxes(range=[0, 1.08])
+    fig_all.update_traces(texttemplate="%{text:.2f}", textposition="outside")
+    fig_all.update_yaxes(range=[0, 100])
     st.plotly_chart(fig_all, use_container_width=True)
 
