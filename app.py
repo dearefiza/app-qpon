@@ -281,6 +281,84 @@ with st.sidebar:
 
 dff = df[df["sentimen_final"].isin(sel_sentimen) & df["aspek_final"].isin(sel_aspek)]
 
+# ─── LOAD DATA EVALUASI MODEL ─────────────────────────────────────────────────
+@st.cache_data
+def load_evaluasi_model():
+    """
+    Dashboard akan membaca file hasil_evaluasi_model.csv atau hasil_evaluasi_model.xlsx
+    jika file tersebut tersedia di folder repo yang sama dengan app Streamlit.
+
+    Format kolom yang disarankan:
+    aspek, skenario, model, accuracy, precision, recall, f1_score
+    """
+    eval_paths = ["hasil_evaluasi_model.xlsx", "hasil_evaluasi_model.csv"]
+    hasil = None
+
+    for path in eval_paths:
+        if os.path.exists(path):
+            if path.endswith(".xlsx"):
+                hasil = pd.read_excel(path)
+            else:
+                hasil = pd.read_csv(path)
+            break
+
+    # Template default. Silakan ganti angka 0.00 dengan hasil evaluasi asli dari modeling.
+    if hasil is None:
+        aspek_list = [
+            "customer service",
+            "fungsionalitas",
+            "transaksi & pembayaran",
+        ]
+        skenario_list = [
+            ("Skenario 1", "SVM", "Model dasar tanpa SMOTE dan tanpa PSO"),
+            ("Skenario 2", "SVM + PSO", "Optimasi hyperparameter C dan gamma menggunakan PSO"),
+            ("Skenario 3", "SVM + SMOTE + PSO", "Penyeimbangan data latih dengan SMOTE dan optimasi PSO"),
+            ("Skenario 4", "Random Forest", "Model dasar tanpa SMOTE dan tanpa PSO"),
+            ("Skenario 5", "Random Forest + PSO", "Optimasi n_estimators dan max_depth menggunakan PSO"),
+            ("Skenario 6", "Random Forest + SMOTE + PSO", "Penyeimbangan data latih dengan SMOTE dan optimasi PSO"),
+        ]
+
+        rows = []
+        for aspek in aspek_list:
+            for skenario, model, keterangan in skenario_list:
+                rows.append({
+                    "aspek": aspek,
+                    "skenario": skenario,
+                    "model": model,
+                    "accuracy": 0.00,
+                    "precision": 0.00,
+                    "recall": 0.00,
+                    "f1_score": 0.00,
+                    "keterangan": keterangan,
+                })
+        hasil = pd.DataFrame(rows)
+
+    # Normalisasi nama kolom supaya aman jika file memakai huruf besar/spasi/tanda hubung.
+    hasil.columns = [
+        str(c).strip().lower().replace(" ", "_").replace("-", "_")
+        for c in hasil.columns
+    ]
+
+    # Antisipasi jika file memakai nama kolom macro_f1.
+    if "macro_f1" in hasil.columns and "f1_score" not in hasil.columns:
+        hasil["f1_score"] = hasil["macro_f1"]
+
+    required_eval_cols = ["aspek", "skenario", "model", "accuracy", "precision", "recall", "f1_score"]
+    for col in required_eval_cols:
+        if col not in hasil.columns:
+            hasil[col] = "" if col in ["aspek", "skenario", "model"] else 0.00
+
+    for col in ["accuracy", "precision", "recall", "f1_score"]:
+        hasil[col] = pd.to_numeric(hasil[col], errors="coerce").fillna(0.00)
+
+    if "keterangan" not in hasil.columns:
+        hasil["keterangan"] = ""
+
+    return hasil
+
+hasil_model = load_evaluasi_model()
+
+
 # ─── METRIC CARDS ──────────────────────────────────────────────────────────────
 total = len(dff)
 cnt_positif = (dff["sentimen_final"] == "positif").sum()
@@ -326,12 +404,13 @@ with col4:
 st.markdown("<br>", unsafe_allow_html=True)
 
 # ─── TAB NAVIGATION ────────────────────────────────────────────────────────────
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
     "📊 Distribusi & Aspek",
     "📈 Time Series",
     "⭐ Rating & Skor",
     "☁️ WordCloud & Top Words",
     "📋 Data Ulasan",
+    "🤖 Evaluasi Model",
 ])
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -623,3 +702,151 @@ with tab5:
     # Download
     csv_export = view[show_cols].rename(columns=rename_map).to_csv(index=False).encode("utf-8")
     st.download_button("⬇️ Download data ini (CSV)", csv_export, "filtered_reviews.csv", "text/csv")
+
+# ══════════════════════════════════════════════════════════════════════════════
+# TAB 6 — EVALUASI MODEL
+# ══════════════════════════════════════════════════════════════════════════════
+with tab6:
+    st.markdown('<div class="section-title">🤖 Perbandingan Hasil Evaluasi 6 Skenario Model</div>', unsafe_allow_html=True)
+    st.markdown(
+        """
+        Tab ini menampilkan perbandingan hasil evaluasi model untuk setiap aspek ulasan. 
+        Metrik yang digunakan meliputi **accuracy**, **precision**, **recall**, dan **F1-score**.
+        """
+    )
+
+    metric_cols = ["accuracy", "precision", "recall", "f1_score"]
+    metric_labels = {
+        "accuracy": "Accuracy",
+        "precision": "Precision",
+        "recall": "Recall",
+        "f1_score": "F1-Score",
+    }
+
+    if hasil_model[metric_cols].sum().sum() == 0:
+        st.warning(
+            "Angka evaluasi masih menggunakan template 0.00. "
+            "Isi file `hasil_evaluasi_model.csv` atau `hasil_evaluasi_model.xlsx` dengan hasil asli dari modeling, "
+            "atau ganti langsung nilai pada bagian `load_evaluasi_model()`."
+        )
+
+    selected_metrics = st.multiselect(
+        "Pilih metrik yang ingin ditampilkan pada bar chart",
+        options=metric_cols,
+        default=metric_cols,
+        format_func=lambda x: metric_labels.get(x, x),
+    )
+
+    # Ringkasan model terbaik berdasarkan F1-score untuk tiap aspek.
+    if not hasil_model.empty:
+        idx_best = hasil_model.groupby("aspek")["f1_score"].idxmax()
+        best_model = hasil_model.loc[idx_best].sort_values("aspek")
+
+        st.markdown('<div class="section-title">🏆 Ringkasan Model Terbaik Berdasarkan F1-Score</div>', unsafe_allow_html=True)
+        best_cols = st.columns(min(3, len(best_model)))
+        for i, (_, row) in enumerate(best_model.iterrows()):
+            with best_cols[i % len(best_cols)]:
+                st.markdown(f"""
+                <div class="metric-card">
+                    <div class="metric-label">{str(row['aspek']).title()}</div>
+                    <div class="metric-value" style="font-size:22px;color:#667eea">{row['model']}</div>
+                    <div class="metric-pct">{row['skenario']} · F1-Score {row['f1_score']:.4f}</div>
+                </div>
+                """, unsafe_allow_html=True)
+
+    st.markdown("---")
+
+    aspek_order = ["customer service", "fungsionalitas", "transaksi & pembayaran"]
+    available_aspek = hasil_model["aspek"].dropna().astype(str).str.lower().unique().tolist()
+    ordered_aspek = [a for a in aspek_order if a in available_aspek]
+    ordered_aspek += [a for a in available_aspek if a not in ordered_aspek]
+
+    for aspek in ordered_aspek:
+        sub = hasil_model[hasil_model["aspek"].astype(str).str.lower() == aspek].copy()
+        if sub.empty:
+            continue
+
+        # Label pendek agar chart mudah dibaca.
+        sub["label_model"] = sub["skenario"].astype(str) + " · " + sub["model"].astype(str)
+        sub = sub.sort_values("skenario")
+
+        st.markdown(f'<div class="section-title">📌 Aspek: <span class="accent">{aspek.title()}</span></div>', unsafe_allow_html=True)
+
+        # Tabel evaluasi per aspek.
+        table_cols = ["skenario", "model", "accuracy", "precision", "recall", "f1_score", "keterangan"]
+        table_view = sub[table_cols].rename(columns={
+            "skenario": "Skenario",
+            "model": "Model",
+            "accuracy": "Accuracy",
+            "precision": "Precision",
+            "recall": "Recall",
+            "f1_score": "F1-Score",
+            "keterangan": "Keterangan",
+        })
+
+        st.dataframe(
+            table_view.style.format({
+                "Accuracy": "{:.4f}",
+                "Precision": "{:.4f}",
+                "Recall": "{:.4f}",
+                "F1-Score": "{:.4f}",
+            }),
+            use_container_width=True,
+            hide_index=True,
+        )
+
+        # Bar chart komparasi tiap model/skenario.
+        if selected_metrics:
+            long_eval = sub.melt(
+                id_vars=["label_model"],
+                value_vars=selected_metrics,
+                var_name="metric",
+                value_name="nilai",
+            )
+            long_eval["metric"] = long_eval["metric"].map(metric_labels)
+
+            fig_eval = px.bar(
+                long_eval,
+                x="label_model",
+                y="nilai",
+                color="metric",
+                barmode="group",
+                text="nilai",
+                labels={
+                    "label_model": "Skenario / Model",
+                    "nilai": "Nilai Evaluasi",
+                    "metric": "Metrik",
+                },
+                title=f"Komparasi Evaluasi Model pada Aspek {aspek.title()}",
+            )
+            fig_eval = fig_style(fig_eval)
+            fig_eval.update_traces(texttemplate="%{text:.3f}", textposition="outside")
+            fig_eval.update_yaxes(range=[0, 1.08])
+            fig_eval.update_xaxes(tickangle=-25)
+            st.plotly_chart(fig_eval, use_container_width=True)
+        else:
+            st.info("Pilih minimal satu metrik untuk menampilkan bar chart.")
+
+        st.markdown("---")
+
+    # Grafik ringkas lintas aspek berdasarkan F1-score.
+    st.markdown('<div class="section-title">📊 Ringkasan F1-Score Seluruh Aspek</div>', unsafe_allow_html=True)
+    fig_all = px.bar(
+        hasil_model,
+        x="aspek",
+        y="f1_score",
+        color="model",
+        barmode="group",
+        text="f1_score",
+        labels={
+            "aspek": "Aspek",
+            "f1_score": "F1-Score",
+            "model": "Model",
+        },
+        title="Perbandingan F1-Score Model pada Seluruh Aspek",
+    )
+    fig_all = fig_style(fig_all)
+    fig_all.update_traces(texttemplate="%{text:.3f}", textposition="outside")
+    fig_all.update_yaxes(range=[0, 1.08])
+    st.plotly_chart(fig_all, use_container_width=True)
+
