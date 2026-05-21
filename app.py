@@ -821,7 +821,7 @@ with tab6:
             )
             fig_eval = fig_style(fig_eval)
             fig_eval.update_traces(texttemplate="%{text:.3f}", textposition="outside")
-            fig_eval.update_yaxes(range=[0, 1.08])
+            fig_eval.update_yaxes(range=[0, 100])
             fig_eval.update_xaxes(tickangle=-25)
             st.plotly_chart(fig_eval, use_container_width=True)
         else:
