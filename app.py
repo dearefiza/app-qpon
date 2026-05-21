@@ -820,10 +820,24 @@ with tab6:
                 title=f"Komparasi Evaluasi Model pada Aspek {aspek.title()}",
             )
             fig_eval = fig_style(fig_eval)
-            fig_eval.update_traces(texttemplate="%{text:.2f}", textposition="outside")
-            fig_eval.update_yaxes(range=[0, 100])
-            fig_eval.update_xaxes(tickangle=-25)
-            st.plotly_chart(fig_eval, use_container_width=True)
+            max_nilai = long_eval["nilai"].max()
+
+            fig_eval.update_traces(
+                texttemplate="%{text:.2f}",
+                textposition="outside",
+                cliponaxis=False
+            )
+            
+            fig_eval.update_yaxes(range=[0, max_nilai * 1.15])
+            
+            fig_eval.update_layout(
+                margin=dict(l=16, r=16, t=80, b=80),
+                height=480
+            )
+            
+            fig_eval.update_xaxes(tickangle=-20)
+
+st.plotly_chart(fig_eval, use_container_width=True)
         else:
             st.info("Pilih minimal satu metrik untuk menampilkan bar chart.")
 
