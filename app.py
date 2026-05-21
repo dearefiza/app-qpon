@@ -177,7 +177,7 @@ div[data-testid="stMultiSelect"] > div {
     white-space: nowrap;
 }
 .stTabs [data-baseweb="tab"] p {
-    font-size: 12px;
+    font-size: 14px;
     margin: 0;
     text-align: center;
 }
