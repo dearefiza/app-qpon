@@ -859,23 +859,23 @@ with tab6:
         },
         title="Perbandingan F1-Score Model pada Seluruh Aspek",
     )
-        fig_all = fig_style(fig_all)
+    fig_all = fig_style(fig_all)
 
-        max_f1 = hasil_model["f1_score"].max()
+    max_f1 = hasil_model["f1_score"].max()
     
-        fig_all.update_traces(
-            texttemplate="%{text:.2f}",
-            textposition="outside",
-            cliponaxis=False
-        )
+    fig_all.update_traces(
+        texttemplate="%{text:.2f}",
+        textposition="outside",
+        cliponaxis=False
+    )
     
-        fig_all.update_yaxes(range=[0, max_f1 * 1.15])
+    fig_all.update_yaxes(range=[0, max_f1 * 1.15])
     
-        fig_all.update_layout(
-            margin=dict(l=16, r=16, t=90, b=90),
-            height=520
-        )
+    fig_all.update_layout(
+        margin=dict(l=16, r=16, t=90, b=90),
+        height=520
+    )
     
-        fig_all.update_xaxes(tickangle=-15)
+    fig_all.update_xaxes(tickangle=-15)
     
-        st.plotly_chart(fig_all, use_container_width=True)
+    st.plotly_chart(fig_all, use_container_width=True)
