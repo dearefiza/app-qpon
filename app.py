@@ -9,7 +9,7 @@ import io
 
 # ─── PAGE CONFIG ───────────────────────────────────────────────────────────────
 st.set_page_config(
-    page_title="Dashboard Analisis Sentimen & Aspek",
+    page_title="Dashboard Analisis Sentimen Berbasis Aspek Aplikasi Qpon",
     page_icon="📊",
     layout="wide",
 )
