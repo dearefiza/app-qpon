@@ -231,7 +231,7 @@ def fig_style(fig):
 # ─── HEADER ────────────────────────────────────────────────────────────────────
 st.markdown("""
 <div class="dashboard-header">
-    <div class="header-title">📊 Dashboard Analisis Sentimen & Aspek</div>
+    <div class="header-title">📊 Dashboard Analisis Sentimen berbasis Aspek Aplikasi Qpon</div>
     <div class="header-sub">Analisis ulasan pengguna · Aspect-Based Sentiment Analysis (ABSA)</div>
 </div>
 """, unsafe_allow_html=True)
