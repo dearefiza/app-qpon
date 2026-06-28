@@ -297,13 +297,13 @@ dff = df[df["final_sentimen"].isin(sel_sentimen) & df["final_aspek"].isin(sel_as
 @st.cache_data
 def load_evaluasi_model():
     """
-    Dashboard akan membaca file hasil_evaluasi_model.csv atau hasil_evaluasi_model.xlsx
+    Dashboard akan membaca file hasil_evaluasi_model_revisi.csv atau hasil_evaluasi_model_revisi.xlsx
     jika file tersebut tersedia di folder repo yang sama dengan app Streamlit.
 
     Format kolom yang disarankan:
     aspek, skenario, model, accuracy, precision, recall, f1_score
     """
-    eval_paths = ["hasil_evaluasi_model.xlsx", "hasil_evaluasi_model.csv"]
+    eval_paths = ["hasil_evaluasi_model_revisi.xlsx", "hasil_evaluasi_model_revisi.csv"]
     hasil = None
 
     for path in eval_paths:
@@ -738,7 +738,7 @@ with tab6:
     if hasil_model[metric_cols].sum().sum() == 0:
         st.warning(
             "Angka evaluasi masih menggunakan template 0.00. "
-            "Isi file `hasil_evaluasi_model.csv` atau `hasil_evaluasi_model.xlsx` dengan hasil asli dari modeling, "
+            "Isi file `hasil_evaluasi_model_revisi.csv` atau `hasil_evaluasi_model_revisi.xlsx` dengan hasil asli dari modeling, "
             "atau ganti langsung nilai pada bagian `load_evaluasi_model()`."
         )
 
