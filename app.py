@@ -251,7 +251,7 @@ def load_data(path):
     return df
 
 # Coba load dari file repo dulu, kalau tidak ada baru minta upload
-DATASET_PATH = "dataset-modelling.xlsx"
+DATASET_PATH = "dataset-modelling-revisi.xlsx"
 import os
 if os.path.exists(DATASET_PATH):
     df = load_data(DATASET_PATH)
@@ -259,7 +259,7 @@ else:
     uploaded = st.file_uploader(
         "Upload dataset (CSV/XLSX)",
         type=["csv", "xlsx"],
-        help="Pastikan kolom: sentimen_final, aspek_final, at, score, final_text"
+        help="Pastikan kolom: final_sentimen, final_aspek, at, score, final_text"
     )
     if uploaded is None:
         st.info("⬆️ Upload file dataset dulu ya untuk memulai dashboard.")
@@ -273,7 +273,7 @@ else:
     df = load_data(tmp_path)
 
 # ─── VALIDATE ──────────────────────────────────────────────────────────────────
-required = ["sentimen_final", "aspek_final"]
+required = ["final_sentimen", "final_aspek"]
 missing = [c for c in required if c not in df.columns]
 if missing:
     st.error(f"Kolom berikut tidak ditemukan: {missing}. Cek nama kolom CSV kamu ya.")
@@ -282,8 +282,8 @@ if missing:
 # ─── SIDEBAR FILTER ────────────────────────────────────────────────────────────
 with st.sidebar:
     st.markdown("### 🔧 Filter Data")
-    all_sentimen = df["sentimen_final"].dropna().unique().tolist()
-    all_aspek    = df["aspek_final"].dropna().unique().tolist()
+    all_sentimen = df["final_sentimen"].dropna().unique().tolist()
+    all_aspek    = df["final_aspek"].dropna().unique().tolist()
 
     sel_sentimen = st.multiselect("Sentimen", all_sentimen, default=all_sentimen)
     sel_aspek    = st.multiselect("Aspek",    all_aspek,    default=all_aspek)
@@ -291,7 +291,7 @@ with st.sidebar:
     st.markdown("---")
     st.markdown(f"<div style='color:#9198c0;font-size:12px'>Total data awal: <b style='color:#1e2240'>{len(df):,}</b></div>", unsafe_allow_html=True)
 
-dff = df[df["sentimen_final"].isin(sel_sentimen) & df["aspek_final"].isin(sel_aspek)]
+dff = df[df["final_sentimen"].isin(sel_sentimen) & df["final_aspek"].isin(sel_aspek)]
 
 # ─── LOAD DATA EVALUASI MODEL ─────────────────────────────────────────────────
 @st.cache_data
@@ -373,9 +373,9 @@ hasil_model = load_evaluasi_model()
 
 # ─── METRIC CARDS ──────────────────────────────────────────────────────────────
 total = len(dff)
-cnt_positif = (dff["sentimen_final"] == "positif").sum()
-cnt_negatif = (dff["sentimen_final"] == "negatif").sum()
-cnt_netral  = (dff["sentimen_final"] == "netral").sum()
+cnt_positif = (dff["final_sentimen"] == "positif").sum()
+cnt_negatif = (dff["final_sentimen"] == "negatif").sum()
+cnt_netral  = (dff["final_sentimen"] == "netral").sum()
 
 pct = lambda n: f"{n/total*100:.1f}%" if total else "0%"
 
@@ -434,13 +434,13 @@ with tab1:
     # Bar Chart Sentimen per Aspek
     with col_a:
         st.markdown('<div class="section-title">📊 Bar Chart Analisis per Aspek</div>', unsafe_allow_html=True)
-        sentimen_aspek = dff.groupby(["aspek_final", "sentimen_final"]).size().reset_index(name="jumlah")
+        sentimen_aspek = dff.groupby(["final_aspek", "final_sentimen"]).size().reset_index(name="jumlah")
         fig1 = px.bar(
             sentimen_aspek,
-            x="aspek_final", y="jumlah", color="sentimen_final",
+            x="final_aspek", y="jumlah", color="final_sentimen",
             barmode="group",
             color_discrete_map=COLOR_SENTIMEN,
-            labels={"aspek_final": "Aspek", "jumlah": "Jumlah", "sentimen_final": "Sentimen"},
+            labels={"final_aspek": "Aspek", "jumlah": "Jumlah", "final_sentimen": "Sentimen"},
         )
         fig1 = fig_style(fig1)
         st.plotly_chart(fig1, use_container_width=True)
@@ -448,7 +448,7 @@ with tab1:
     # Pie Chart Distribusi Sentimen
     with col_b:
         st.markdown('<div class="section-title">🥧 Pie Chart Distribusi Sentimen</div>', unsafe_allow_html=True)
-        sentimen_count = dff["sentimen_final"].value_counts().reset_index()
+        sentimen_count = dff["final_sentimen"].value_counts().reset_index()
         sentimen_count.columns = ["sentimen", "jumlah"]
         fig2 = px.pie(
             sentimen_count, names="sentimen", values="jumlah",
@@ -462,7 +462,7 @@ with tab1:
 
     # Bar Chart Distribusi Aspek
     st.markdown('<div class="section-title">📦 Distribusi per Aspek</div>', unsafe_allow_html=True)
-    aspek_count = dff["aspek_final"].value_counts().reset_index()
+    aspek_count = dff["final_aspek"].value_counts().reset_index()
     aspek_count.columns = ["aspek", "jumlah"]
     fig3 = px.bar(
         aspek_count, x="aspek", y="jumlah",
@@ -475,7 +475,7 @@ with tab1:
 
     # Heatmap Sentimen vs Aspek (persen)
     st.markdown('<div class="section-title">🔥 Heatmap Persentase Sentimen per Aspek</div>', unsafe_allow_html=True)
-    crosstab = pd.crosstab(dff["aspek_final"], dff["sentimen_final"], normalize="index") * 100
+    crosstab = pd.crosstab(dff["final_aspek"], dff["final_sentimen"], normalize="index") * 100
     fig4 = px.imshow(
         crosstab.round(1),
         text_auto=True,
@@ -494,13 +494,13 @@ with tab2:
         st.warning("Kolom `at` (tanggal) tidak ditemukan. Tab ini memerlukan data waktu.")
     else:
         st.markdown('<div class="section-title">📈 Tren Sentimen per Bulan</div>', unsafe_allow_html=True)
-        trend = dff.groupby(["tahun_bulan", "sentimen_final"]).size().reset_index(name="jumlah")
+        trend = dff.groupby(["tahun_bulan", "final_sentimen"]).size().reset_index(name="jumlah")
         fig5 = px.line(
             trend, x="tahun_bulan", y="jumlah",
-            color="sentimen_final",
+            color="final_sentimen",
             color_discrete_map=COLOR_SENTIMEN,
             markers=True,
-            labels={"tahun_bulan": "Bulan", "jumlah": "Jumlah Review", "sentimen_final": "Sentimen"},
+            labels={"tahun_bulan": "Bulan", "jumlah": "Jumlah Review", "final_sentimen": "Sentimen"},
         )
         fig5 = fig_style(fig5)
         fig5.update_xaxes(tickangle=45)
@@ -519,13 +519,13 @@ with tab2:
         st.plotly_chart(fig6, use_container_width=True)
 
         st.markdown('<div class="section-title">📊 Tren Aspek per Bulan</div>', unsafe_allow_html=True)
-        trend_aspek = dff.groupby(["tahun_bulan", "aspek_final"]).size().reset_index(name="jumlah")
+        trend_aspek = dff.groupby(["tahun_bulan", "final_aspek"]).size().reset_index(name="jumlah")
         fig7 = px.line(
             trend_aspek, x="tahun_bulan", y="jumlah",
-            color="aspek_final",
+            color="final_aspek",
             color_discrete_map=COLOR_ASPEK,
             markers=True,
-            labels={"tahun_bulan": "Bulan", "jumlah": "Jumlah Review", "aspek_final": "Aspek"},
+            labels={"tahun_bulan": "Bulan", "jumlah": "Jumlah Review", "final_aspek": "Aspek"},
         )
         fig7 = fig_style(fig7)
         fig7.update_xaxes(tickangle=45)
@@ -555,25 +555,25 @@ with tab3:
 
         with col_r2:
             st.markdown('<div class="section-title">💬 Sentimen per Rating</div>', unsafe_allow_html=True)
-            score_sent = dff.groupby(["score", "sentimen_final"]).size().reset_index(name="jumlah")
+            score_sent = dff.groupby(["score", "final_sentimen"]).size().reset_index(name="jumlah")
             fig9 = px.bar(
                 score_sent, x="score", y="jumlah",
-                color="sentimen_final",
+                color="final_sentimen",
                 barmode="stack",
                 color_discrete_map=COLOR_SENTIMEN,
-                labels={"score": "Rating", "jumlah": "Jumlah", "sentimen_final": "Sentimen"},
+                labels={"score": "Rating", "jumlah": "Jumlah", "final_sentimen": "Sentimen"},
             )
             fig9 = fig_style(fig9)
             st.plotly_chart(fig9, use_container_width=True)
 
         st.markdown('<div class="section-title">📦 Aspek per Rating</div>', unsafe_allow_html=True)
-        score_aspek = dff.groupby(["score", "aspek_final"]).size().reset_index(name="jumlah")
+        score_aspek = dff.groupby(["score", "final_aspek"]).size().reset_index(name="jumlah")
         fig10 = px.bar(
             score_aspek, x="score", y="jumlah",
-            color="aspek_final",
+            color="final_aspek",
             barmode="group",
             color_discrete_map=COLOR_ASPEK,
-            labels={"score": "Rating", "jumlah": "Jumlah", "aspek_final": "Aspek"},
+            labels={"score": "Rating", "jumlah": "Jumlah", "final_aspek": "Aspek"},
         )
         fig10 = fig_style(fig10)
         st.plotly_chart(fig10, use_container_width=True)
@@ -584,19 +584,19 @@ with tab3:
             with col_h1:
                 fig11 = px.histogram(
                     dff, x="jumlah_kata", nbins=30,
-                    color="sentimen_final",
+                    color="final_sentimen",
                     color_discrete_map=COLOR_SENTIMEN,
-                    labels={"jumlah_kata": "Jumlah Kata", "sentimen_final": "Sentimen"},
+                    labels={"jumlah_kata": "Jumlah Kata", "final_sentimen": "Sentimen"},
                     opacity=0.8,
                 )
                 fig11 = fig_style(fig11)
                 st.plotly_chart(fig11, use_container_width=True)
             with col_h2:
                 fig12 = px.box(
-                    dff, x="sentimen_final", y="jumlah_kata",
-                    color="sentimen_final",
+                    dff, x="final_sentimen", y="jumlah_kata",
+                    color="final_sentimen",
                     color_discrete_map=COLOR_SENTIMEN,
-                    labels={"sentimen_final": "Sentimen", "jumlah_kata": "Jumlah Kata"},
+                    labels={"final_sentimen": "Sentimen", "jumlah_kata": "Jumlah Kata"},
                 )
                 fig12 = fig_style(fig12)
                 st.plotly_chart(fig12, use_container_width=True)
@@ -653,8 +653,8 @@ with tab4:
                     st.plotly_chart(top_words_chart(all_text, title=""), use_container_width=True)
 
         elif wc_scope == "per Sentimen":
-            for sent in dff["sentimen_final"].unique():
-                text = " ".join(dff[dff["sentimen_final"] == sent]["final_text"].dropna().astype(str))
+            for sent in dff["final_sentimen"].unique():
+                text = " ".join(dff[dff["final_sentimen"] == sent]["final_text"].dropna().astype(str))
                 if not text.strip():
                     continue
                 st.markdown(f'<div class="section-title">☁️ Sentimen: <span class="accent">{sent}</span></div>', unsafe_allow_html=True)
@@ -667,8 +667,8 @@ with tab4:
                 st.markdown("---")
 
         else:
-            for aspek in dff["aspek_final"].unique():
-                text = " ".join(dff[dff["aspek_final"] == aspek]["final_text"].dropna().astype(str))
+            for aspek in dff["final_aspek"].unique():
+                text = " ".join(dff[dff["final_aspek"] == aspek]["final_text"].dropna().astype(str))
                 if not text.strip():
                     continue
                 st.markdown(f'<div class="section-title">☁️ Aspek: <span class="accent">{aspek}</span></div>', unsafe_allow_html=True)
@@ -687,21 +687,21 @@ with tab5:
 
     col_f1, col_f2 = st.columns(2)
     with col_f1:
-        filter_sent = st.selectbox("Filter Sentimen", ["Semua"] + dff["sentimen_final"].unique().tolist())
+        filter_sent = st.selectbox("Filter Sentimen", ["Semua"] + dff["final_sentimen"].unique().tolist())
     with col_f2:
-        filter_aspek = st.selectbox("Filter Aspek", ["Semua"] + dff["aspek_final"].unique().tolist())
+        filter_aspek = st.selectbox("Filter Aspek", ["Semua"] + dff["final_aspek"].unique().tolist())
 
     view = dff.copy()
     if filter_sent != "Semua":
-        view = view[view["sentimen_final"] == filter_sent]
+        view = view[view["final_sentimen"] == filter_sent]
     if filter_aspek != "Semua":
-        view = view[view["aspek_final"] == filter_aspek]
+        view = view[view["final_aspek"] == filter_aspek]
 
     # Kolom yang ditampilkan
-    show_cols = [c for c in ["at", "score", "content", "sentimen_final", "aspek_final"] if c in view.columns]
+    show_cols = [c for c in ["at", "score", "content", "final_sentimen", "final_aspek"] if c in view.columns]
     rename_map = {
         "at": "Tanggal", "score": "Rating", "final_text": "Ulasan",
-        "sentimen_final": "Sentimen", "aspek_final": "Aspek"
+        "final_sentimen": "Sentimen", "final_aspek": "Aspek"
     }
 
     st.markdown(f"<div style='color:#9198c0;font-size:13px;margin-bottom:12px'>Menampilkan <b style='color:#1e2240'>{len(view):,}</b> ulasan</div>", unsafe_allow_html=True)
